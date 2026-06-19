@@ -43,10 +43,16 @@ export interface SecretCard {
   accent?: string;
 }
 
-/** The result of dealing a single round, in selected-player order. */
-export interface Round {
-  cards: SecretCard[];
+/** A single prompt shown to the whole group at once (no hidden info). */
+export interface PromptCard {
+  text: string;
 }
+
+/** The result of dealing a round. Either per-player secrets revealed by passing
+ *  the phone around, or a shared deck of prompts the group flips through. */
+export type Round =
+  | { kind: "secret"; cards: SecretCard[] }
+  | { kind: "prompts"; prompts: PromptCard[] };
 
 export interface GameDefinition {
   id: string;

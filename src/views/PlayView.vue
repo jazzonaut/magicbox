@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import Button from "primevue/button";
 import { getGame } from "@/games/registry";
 import { usePlayers } from "@/composables/use-players";
 import { useGameOptions } from "@/composables/use-game-options";
-import type { Player, Round } from "@/games/types";
+import type { Player, PromptCard, Round, SecretCard } from "@/games/types";
 import SecretRevealFlow from "@/components/SecretRevealFlow.vue";
+import PromptDeckFlow from "@/components/PromptDeckFlow.vue";
 
 const props = defineProps<{ gameId: string }>();
 const router = useRouter();
@@ -26,9 +27,18 @@ const optionValues = game ? useGameOptions(game.id, game.options) : null;
 // Snapshot the players for this round so roster edits mid-round can't shift the
 // deal. Re-snapshotted only on "New round".
 const roundPlayers = ref<Player[]>([]);
-const round = ref<Round>({ cards: [] });
+const round = ref<Round>({ kind: "secret", cards: [] });
 const stage = ref<"reveal" | "done">("reveal");
 const flowKey = ref(0);
+
+// Narrow the round once here so the template stays simple.
+const isPrompts = computed(() => round.value.kind === "prompts");
+const secretCards = computed<SecretCard[]>(() =>
+  round.value.kind === "secret" ? round.value.cards : [],
+);
+const promptCards = computed<PromptCard[]>(() =>
+  round.value.kind === "prompts" ? round.value.prompts : [],
+);
 
 function deal(): void {
   if (!game || !optionValues) {
@@ -75,41 +85,46 @@ if (game) {
       </button>
     </header>
 
-    <!-- Reveal sequence -->
-    <SecretRevealFlow
-      v-if="stage === 'reveal'"
-      :key="flowKey"
-      :cards="round.cards"
-      :players="roundPlayers"
-      @done="stage = 'done'"
-    />
+    <!-- Prompt-deck games: the group flips through shared cards together. -->
+    <PromptDeckFlow v-if="isPrompts" :key="flowKey" :prompts="promptCards" @shuffle="deal" />
 
-    <!-- Everyone has seen their word: hand-off to live discussion. -->
-    <div v-else class="flex flex-1 flex-col items-center justify-center gap-8 text-center">
-      <div>
-        <p class="text-6xl">🗣️</p>
-        <h2 class="mt-4 text-2xl font-bold">Everyone's in!</h2>
-        <p class="mt-2 text-[var(--mb-muted)]">
-          Start discussing and find the impostor. Tap below for a fresh round with the same players.
-        </p>
+    <!-- Secret games: pass-and-play reveal, then hand off to live discussion. -->
+    <template v-else>
+      <SecretRevealFlow
+        v-if="stage === 'reveal'"
+        :key="flowKey"
+        :cards="secretCards"
+        :players="roundPlayers"
+        @done="stage = 'done'"
+      />
+
+      <div v-else class="flex flex-1 flex-col items-center justify-center gap-8 text-center">
+        <div>
+          <p class="text-6xl">🗣️</p>
+          <h2 class="mt-4 text-2xl font-bold">Everyone's in!</h2>
+          <p class="mt-2 text-[var(--mb-muted)]">
+            Everyone has seen their card. Start the discussion! Tap below for a fresh round with the
+            same players.
+          </p>
+        </div>
+        <div class="flex w-full max-w-xs flex-col gap-3">
+          <Button
+            label="New round"
+            icon="pi pi-refresh"
+            size="large"
+            class="w-full"
+            @click="newRound"
+          />
+          <Button
+            label="Back to setup"
+            icon="pi pi-cog"
+            severity="secondary"
+            text
+            class="w-full"
+            @click="backToSetup"
+          />
+        </div>
       </div>
-      <div class="flex w-full max-w-xs flex-col gap-3">
-        <Button
-          label="New round"
-          icon="pi pi-refresh"
-          size="large"
-          class="w-full"
-          @click="newRound"
-        />
-        <Button
-          label="Back to setup"
-          icon="pi pi-cog"
-          severity="secondary"
-          text
-          class="w-full"
-          @click="backToSetup"
-        />
-      </div>
-    </div>
+    </template>
   </div>
 </template>

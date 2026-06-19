@@ -69,6 +69,6 @@ export const impostor: GameDefinition = {
       };
     });
 
-    return { cards };
+    return { kind: "secret", cards };
   },
 };

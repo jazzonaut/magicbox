@@ -4,8 +4,13 @@ A pass-the-phone party game engine for playing with the family. Pick a game, tic
 who's playing, and pass the phone around — each player privately reveals their
 secret. Built as an offline-capable PWA, no backend, no accounts.
 
-First game: **Impostor** — everyone gets a secret word except one impostor; talk it
-out and find the faker.
+Games so far:
+
+- **Impostor** — everyone gets a secret word except one impostor; talk it out and find the faker.
+- **Word Wolf** — everyone gets a word, but the lone wolf gets a different one and nobody knows who.
+- **Spyfall** — everyone shares a secret location and role; one spy must blend in.
+- **Would You Rather** — a deck of silly dilemmas to read aloud and debate.
+- **Most Likely To** — read a prompt, then everyone points at who fits best.
 
 ## Run it
 
@@ -43,8 +48,10 @@ A **generic engine** owns everything shared across games; each **game is a plug-
   persisted in `localStorage`.
 - `src/composables/use-game-options.ts` — per-game option values, remembered between
   sessions.
-- `src/components/SecretRevealFlow.vue` — the generic pass-and-play reveal UI, driven
-  entirely by `SecretCard`s, so it works for any hidden-role game.
+- A game's `createRound` returns one of two round kinds: `secret` (per-player cards
+  revealed by passing the phone, via `SecretRevealFlow.vue`) or `prompts` (a shared
+  deck the group flips through together, via `PromptDeckFlow.vue`). `PlayView` picks
+  the right flow automatically.
 - `src/views/` — `HomeView` (picker) → `SetupView` (players + options) → `PlayView`
   (deal + reveal + discuss).
 
