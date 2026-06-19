@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+# Builds the static PWA and publishes it to GitHub Pages on every push to the
+# default branch. The build is base-path aware: VITE_BASE is set to the repo
+# name so the app works under https://<user>.github.io/<repo>/.
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+# Least-privilege tokens required by the Pages deploy.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; newer pushes supersede in-flight runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Quality gates — fail the deploy if any of these fail.
+      - run: pnpm lint
+      - run: pnpm format:check
+
+      # `pnpm build` runs vue-tsc (typecheck) then vite build.
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+
+      # SPA fallback: GitHub Pages serves 404.html for unknown paths, so a
+      # refresh on a client route (e.g. /play/impostor) still loads the app.
+      - name: Add SPA 404 fallback
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

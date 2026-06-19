@@ -33,8 +33,17 @@ It's a PWA: `pnpm build` produces a static `dist/` you can host anywhere (Netlif
 GitHub Pages, or serve over your home Wi-Fi). Open it on the phone and "Add to Home
 Screen" — it then launches fullscreen and works offline.
 
-> Deploying under a GitHub Pages project sub-path? Set `base: "/<repo>/"` in
-> `vite.config.ts`.
+### Deploy to GitHub Pages
+
+`.github/workflows/deploy.yml` builds and publishes the app on every push to `main`
+(or `master`). One-time setup: in the repo, go to **Settings → Pages → Build and
+deployment → Source** and choose **GitHub Actions**. After the next push the app is
+live at `https://<user>.github.io/<repo>/`.
+
+The workflow sets `VITE_BASE` to `/<repo>/` so assets and deep links resolve under
+the project sub-path, and copies `index.html` to `404.html` so refreshing a client
+route works. For a root user/org page (`<user>.github.io` repo) or a custom domain,
+build with `VITE_BASE=/` instead.
 
 ## How it's built
 
@@ -68,4 +77,5 @@ That's it — the engine renders its options and runs the reveal flow. No engine
   impostors" (another option) and an end-of-round "who was it" reveal (one extra
   `Round` field + screen) are easy to add later.
 - Word lists live in `src/games/impostor/word-bank.ts` — edit to taste.
-- App icons in `public/` are flat-colour placeholders; swap in real art anytime.
+- App icons in `public/` are generated die-face tiles. Regenerate with `pnpm icons`
+  (edit colour/pips in `scripts/gen-icons.mjs`); the favicon is a matching SVG.

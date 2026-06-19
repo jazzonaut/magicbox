@@ -32,5 +32,5 @@
       }
     }
   ],
-  "ignorePatterns": ["dist", "node_modules", "dev-dist", "**/*.gen.ts"]
+  "ignorePatterns": ["dist", "node_modules", "dev-dist", "scripts", "**/*.gen.ts"]
 }
