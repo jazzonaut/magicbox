@@ -1,0 +1,50 @@
+/* Pin the cascade-layer order before anything declares layers: PrimeVue's
+   styles (cssLayer in main.ts) must sit below Tailwind's components/utilities,
+   or component styles silently beat utility classes. This is the documented
+   PrimeVue + Tailwind v4 integration order. */
+@layer theme, base, primevue, components, utilities;
+
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+
+/* MagicBox is dark-only; the `data-theme="dark"` attribute on <html> is the
+   single source of truth so Tailwind's `dark:` variant and PrimeVue's
+   darkModeSelector (main.ts) agree. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --mb-bg: #0c0a09;
+  --mb-surface: #1c1917;
+  --mb-surface-2: #292524;
+  --mb-fg: #f5f5f4;
+  --mb-muted: #a8a29e;
+  --mb-accent: #8b5cf6;
+}
+
+html {
+  background-color: var(--mb-bg);
+  color: var(--mb-fg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
+  /* Respect the notch / home indicator on phones. */
+  min-height: 100dvh;
+}
+
+/* Prevent text selection on tappable game UI — feels more app-like. */
+.mb-no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}

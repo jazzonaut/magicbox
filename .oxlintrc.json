@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error",
+    "restriction": "off",
+    "pedantic": "off",
+    "style": "off",
+    "nursery": "off"
+  },
+  "plugins": ["typescript", "unicorn", "import", "promise", "vue"],
+  "rules": {
+    "no-console": "error",
+    "no-debugger": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/consistent-type-imports": "error",
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
+    "unicorn/no-null": "off",
+    "import/no-duplicates": "error",
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }],
+    "import/no-default-export": "error",
+    "promise/no-return-wrap": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.vue", "**/views/**/*.ts", "**/router/**/*.ts", "vite.config.ts", "**/*.config.ts"],
+      "rules": {
+        "import/no-default-export": "off",
+        "unicorn/filename-case": ["error", { "cases": { "kebabCase": true, "pascalCase": true } }]
+      }
+    }
+  ],
+  "ignorePatterns": ["dist", "node_modules", "dev-dist", "**/*.gen.ts"]
+}
