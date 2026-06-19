@@ -35,9 +35,5 @@ function openGame(id: string): void {
         <GameTile :game="game" @click="openGame(game.id)" />
       </li>
     </ul>
-
-    <p class="mt-auto pb-6 pt-10 text-center text-xs text-[var(--mb-muted)]">
-      Pass-and-play party games · works offline
-    </p>
   </div>
 </template>

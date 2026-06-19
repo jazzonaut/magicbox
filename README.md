@@ -4,6 +4,8 @@ A pass-the-phone party game engine for playing with the family. Pick a game, tic
 who's playing, and pass the phone around — each player privately reveals their
 secret. Built as an offline-capable PWA, no backend, no accounts.
 
+**▶️ Play it: https://jazzonaut.github.io/magicbox**
+
 Games so far:
 
 - **Impostor** — everyone gets a secret word except one impostor; talk it out and find the faker.
