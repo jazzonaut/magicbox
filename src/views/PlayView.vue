@@ -61,6 +61,19 @@ const revealedPlayers = computed<Player[]>(() => {
     .map((id) => playersById.value.get(id))
     .filter((p): p is Player => p !== undefined);
 });
+// Per-player recap (e.g. who held which secret personality), resolved to players.
+const revealedAssignments = computed<{ player: Player; value: string }[]>(() => {
+  const answer = reveal.value;
+  if (!answer?.assignments) {
+    return [];
+  }
+  return answer.assignments
+    .map((a) => {
+      const player = playersById.value.get(a.playerId);
+      return player ? { player, value: a.value } : null;
+    })
+    .filter((entry): entry is { player: Player; value: string } => entry !== null);
+});
 
 function deal(): void {
   if (!game || !optionValues) {
@@ -160,13 +173,27 @@ if (game) {
           />
           <div v-else class="rounded-2xl bg-[var(--mb-surface)] px-6 py-4">
             <p class="text-sm uppercase tracking-wide text-[var(--mb-muted)]">{{ reveal.label }}</p>
-            <p class="mt-1 text-2xl font-bold">
+            <p v-if="revealedPlayers.length" class="mt-1 text-2xl font-bold">
               <span v-for="(p, i) in revealedPlayers" :key="p.id">
                 <span v-if="i > 0">, </span>
                 <span v-if="p.emoji" class="mr-1">{{ p.emoji }}</span
                 >{{ p.name }}
               </span>
             </p>
+            <!-- Per-player recap: "Name → secret", one row each. -->
+            <ul v-if="revealedAssignments.length" class="mt-2 flex flex-col gap-1 text-left">
+              <li
+                v-for="{ player, value } in revealedAssignments"
+                :key="player.id"
+                class="flex items-baseline justify-between gap-3"
+              >
+                <span class="font-medium">
+                  <span v-if="player.emoji" class="mr-1">{{ player.emoji }}</span
+                  >{{ player.name }}
+                </span>
+                <span class="text-[var(--mb-muted)]">{{ value }}</span>
+              </li>
+            </ul>
             <p v-if="reveal.note" class="mt-2 text-[var(--mb-muted)]">{{ reveal.note }}</p>
           </div>
         </div>

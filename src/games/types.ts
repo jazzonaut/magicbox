@@ -57,6 +57,9 @@ export interface RoundReveal {
   playerIds: string[];
   /** Optional extra line, e.g. "The word was: Pizza". */
   note?: string;
+  /** Optional per-player recap, e.g. who had which secret personality. Rendered
+   *  as a "Name → value" list, for games where everyone held a different secret. */
+  assignments?: { playerId: string; value: string }[] | undefined;
 }
 
 /** Presentation hints shared by every round kind, rendered by the engine rather

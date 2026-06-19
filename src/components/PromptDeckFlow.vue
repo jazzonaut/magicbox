@@ -32,7 +32,9 @@ function previous(): void {
       <p v-if="starter && index === 0" class="text-sm text-[var(--mb-muted)]">
         <span v-if="starter.emoji">{{ starter.emoji }} </span>{{ starter.name }} goes first
       </p>
-      <p class="text-2xl font-bold leading-snug break-words">{{ current?.text }}</p>
+      <p class="text-2xl font-bold leading-snug break-words whitespace-pre-line">
+        {{ current?.text }}
+      </p>
       <p class="text-sm text-[var(--mb-muted)]">{{ index + 1 }} / {{ prompts.length }}</p>
     </div>
 

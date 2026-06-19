@@ -3,7 +3,14 @@
 // spreading these into its `options`, then calling the matching reader inside
 // `createRound` to translate the stored value.
 
-import type { GameOption, OptionValues, PromptCard } from "@/games/types";
+import type {
+  GameOption,
+  OptionValues,
+  Player,
+  PromptCard,
+  Round,
+  SecretCard,
+} from "@/games/types";
 import { shuffle } from "@/utils/random";
 
 const TIMER_OFF = "off";
@@ -115,4 +122,51 @@ export function buildPromptDeck(entries: PromptEntry[], options: OptionValues): 
   return shuffle(pool)
     .slice(0, count)
     .map((entry) => ({ text: entry.text }));
+}
+
+// ---- Personal-secret rounds (Secret Personality, Secret Identity) -----------
+
+/** One secret a single player gets to play out. `value` is the short label shown
+ *  both on the card title (via `titleFor`) and in the end-of-round recap. */
+export interface PersonalSecret {
+  value: string;
+  hint: string;
+}
+
+/** Deal one secret per player from `items`, then offer a recap reveal listing who
+ *  had what. Shared by the two "everyone gets a different secret, guess at the
+ *  end" games. Items shuffle each round; if there are more players than items the
+ *  list wraps, so a couple of players may share — fine for a party game. */
+export function dealPersonalSecrets(
+  players: Player[],
+  items: PersonalSecret[],
+  config: { accent: string; titleFor: (value: string) => string; revealLabel: string },
+  options: OptionValues,
+): Round {
+  const deck = shuffle(items);
+  const fallback: PersonalSecret = { value: "", hint: "" };
+  const dealt = players.map((player, index) => {
+    const secret = deck.length > 0 ? (deck[index % deck.length] ?? fallback) : fallback;
+    return { playerId: player.id, value: secret.value, hint: secret.hint };
+  });
+
+  const cards: SecretCard[] = dealt.map((entry) => ({
+    playerId: entry.playerId,
+    title: config.titleFor(entry.value),
+    subtitle: entry.hint,
+    accent: config.accent,
+  }));
+
+  return {
+    kind: "secret",
+    cards,
+    timerSeconds: timerSecondsFrom(options),
+    reveal: revealEnabled(options)
+      ? {
+          label: config.revealLabel,
+          playerIds: [],
+          assignments: dealt.map((entry) => ({ playerId: entry.playerId, value: entry.value })),
+        }
+      : undefined,
+  };
 }
