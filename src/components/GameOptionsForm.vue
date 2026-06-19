@@ -14,21 +14,30 @@ function setValue(key: string, value: OptionValue): void {
 
 <template>
   <ul class="flex flex-col gap-2">
-    <li
-      v-for="option in options"
-      :key="option.key"
-      class="flex items-center gap-4 rounded-2xl bg-[var(--mb-surface)] p-4"
-    >
-      <div class="min-w-0 flex-1">
-        <div class="font-medium">{{ option.label }}</div>
-        <div v-if="option.help" class="mt-0.5 text-sm text-[var(--mb-muted)]">
-          {{ option.help }}
+    <li v-for="option in options" :key="option.key" class="rounded-2xl bg-[var(--mb-surface)] p-4">
+      <!-- Label, with a small inline control (toggle) on the right. -->
+      <div class="flex items-center gap-4">
+        <div class="min-w-0 flex-1">
+          <div class="font-medium">{{ option.label }}</div>
+          <div v-if="option.help" class="mt-0.5 text-sm text-[var(--mb-muted)]">
+            {{ option.help }}
+          </div>
         </div>
+        <ToggleSwitch
+          v-if="option.kind === 'boolean'"
+          :model-value="modelValue[option.key] as boolean"
+          @update:model-value="setValue(option.key, $event)"
+        />
       </div>
 
-      <ToggleSwitch
-        v-if="option.kind === 'boolean'"
-        :model-value="modelValue[option.key] as boolean"
+      <!-- Wide controls get their own full-width row so values never truncate. -->
+      <Select
+        v-if="option.kind === 'select'"
+        :model-value="modelValue[option.key] as string"
+        :options="option.choices"
+        option-label="label"
+        option-value="value"
+        class="mt-3 w-full"
         @update:model-value="setValue(option.key, $event)"
       />
 
@@ -39,17 +48,7 @@ function setValue(key: string, value: OptionValue): void {
         :max="option.max"
         show-buttons
         button-layout="horizontal"
-        class="w-32"
-        @update:model-value="setValue(option.key, $event)"
-      />
-
-      <Select
-        v-else
-        :model-value="modelValue[option.key] as string"
-        :options="option.choices"
-        option-label="label"
-        option-value="value"
-        class="w-40"
+        class="mt-3 w-full"
         @update:model-value="setValue(option.key, $event)"
       />
     </li>

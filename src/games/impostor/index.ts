@@ -19,7 +19,7 @@ export const impostor: GameDefinition = {
   name: "Impostor",
   emoji: "🕵️",
   description:
-    "Everyone gets a secret word — except one impostor. Pass the phone, then talk it out and find the faker.",
+    "Everyone gets the same secret word, except one impostor. Talk it out and unmask the faker.",
   minPlayers: 3,
   options: [
     {
