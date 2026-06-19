@@ -5,6 +5,7 @@ import Button from "primevue/button";
 import { getGame } from "@/games/registry";
 import { usePlayers } from "@/composables/use-players";
 import { useGameOptions } from "@/composables/use-game-options";
+import { pickOne } from "@/utils/random";
 import type { Player, PromptCard, Round, SecretCard } from "@/games/types";
 import SecretRevealFlow from "@/components/SecretRevealFlow.vue";
 import PromptDeckFlow from "@/components/PromptDeckFlow.vue";
@@ -30,6 +31,8 @@ const roundPlayers = ref<Player[]>([]);
 const round = ref<Round>({ kind: "secret", cards: [] });
 const stage = ref<"reveal" | "done">("reveal");
 const flowKey = ref(0);
+// A randomly chosen player to kick things off (clue-giving / reading order).
+const starter = ref<Player | null>(null);
 
 // Narrow the round once here so the template stays simple.
 const isPrompts = computed(() => round.value.kind === "prompts");
@@ -46,6 +49,7 @@ function deal(): void {
   }
   roundPlayers.value = [...selectedPlayers.value];
   round.value = game.createRound(roundPlayers.value, optionValues.value);
+  starter.value = roundPlayers.value.length > 0 ? pickOne(roundPlayers.value) : null;
   stage.value = "reveal";
   flowKey.value += 1;
 }
@@ -86,7 +90,13 @@ if (game) {
     </header>
 
     <!-- Prompt-deck games: the group flips through shared cards together. -->
-    <PromptDeckFlow v-if="isPrompts" :key="flowKey" :prompts="promptCards" @shuffle="deal" />
+    <PromptDeckFlow
+      v-if="isPrompts"
+      :key="flowKey"
+      :prompts="promptCards"
+      :starter="starter"
+      @shuffle="deal"
+    />
 
     <!-- Secret games: pass-and-play reveal, then hand off to live discussion. -->
     <template v-else>
@@ -105,6 +115,13 @@ if (game) {
           <p class="mt-2 text-[var(--mb-muted)]">
             Everyone has seen their card. Start the discussion! Tap below for a fresh round with the
             same players.
+          </p>
+        </div>
+        <div v-if="starter" class="rounded-2xl bg-[var(--mb-surface)] px-6 py-4">
+          <p class="text-sm uppercase tracking-wide text-[var(--mb-muted)]">First to speak</p>
+          <p class="mt-1 text-2xl font-bold">
+            <span v-if="starter.emoji" class="mr-1">{{ starter.emoji }}</span
+            >{{ starter.name }}
           </p>
         </div>
         <div class="flex w-full max-w-xs flex-col gap-3">

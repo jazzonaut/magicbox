@@ -116,7 +116,7 @@ function start(): void {
         label="Start game"
         icon="pi pi-play"
         size="large"
-        class="w-full"
+        class="mb-3 w-full"
         :disabled="!canStart"
         @click="start"
       />

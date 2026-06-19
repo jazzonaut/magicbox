@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import Button from "primevue/button";
-import type { PromptCard } from "@/games/types";
+import type { Player, PromptCard } from "@/games/types";
 
-const props = defineProps<{ prompts: PromptCard[] }>();
+const props = defineProps<{ prompts: PromptCard[]; starter?: Player | null }>();
 const emit = defineEmits<{ shuffle: [] }>();
 
 const index = ref(0);
@@ -29,6 +29,9 @@ function previous(): void {
   <div class="mb-no-select flex flex-1 flex-col">
     <!-- The prompt, large and centred. -->
     <div class="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+      <p v-if="starter && index === 0" class="text-sm text-[var(--mb-muted)]">
+        <span v-if="starter.emoji">{{ starter.emoji }} </span>{{ starter.name }} goes first
+      </p>
       <p class="text-2xl font-bold leading-snug break-words">{{ current?.text }}</p>
       <p class="text-sm text-[var(--mb-muted)]">{{ index + 1 }} / {{ prompts.length }}</p>
     </div>
