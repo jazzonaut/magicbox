@@ -14,6 +14,19 @@ Games so far:
 - **Would You Rather** — a deck of silly dilemmas to read aloud and debate.
 - **Most Likely To** — read a prompt, then everyone points at who fits best.
 
+Each game has per-round options on the setup screen — pick the variant before you deal:
+
+- **Impostor** — word category, number of impostors, whether impostors know each other, an
+  optional category hint.
+- **Word Wolf** — number of wolves.
+- **Spyfall** — location pack (everyday / fantasy), number of spies, whether the spy sees the
+  list of possible locations (the classic rule), and a roles-off mode for younger players.
+- **Would You Rather** / **Most Likely To** — theme pack, a "Keep it gentle" toggle that hides
+  the cheekier prompts (on by default), and how many cards to deal.
+
+The hidden-role games (Impostor, Word Wolf, Spyfall) also share two engine-level extras: an
+optional **discussion timer** and an **end-of-round reveal** that names who it was.
+
 ## Run it
 
 ```bash
@@ -75,9 +88,16 @@ That's it — the engine renders its options and runs the reveal flow. No engine
 
 ## Notes
 
-- Impostor: single impostor, optional category hint (off by default). Both "more
-  impostors" (another option) and an end-of-round "who was it" reveal (one extra
-  `Round` field + screen) are easy to add later.
-- Word lists live in `src/games/impostor/word-bank.ts` — edit to taste.
+- Shared option building blocks (the discussion timer, the end-of-round reveal, and the
+  prompt-deck pack / gentle / card-count options) live in `src/games/shared.ts` so every
+  game wires them up the same way. A game opts in by spreading the option into its `options`
+  and calling the matching reader (`timerSecondsFrom`, `revealEnabled`, `buildPromptDeck`)
+  inside `createRound`.
+- The engine renders `Round.timerSeconds` (a countdown via `DiscussionTimer.vue`) and
+  `Round.reveal` (a "who was it" panel) — no game-specific UI needed.
+- Word lists live in `src/games/impostor/word-bank.ts` — edit to taste. Prompt decks
+  (`would-you-rather`, `most-likely-to`) are tagged `PromptEntry`s; the per-game `*_PACKS`
+  export drives the theme dropdown, and a `cheeky: true` flag hides a prompt while
+  "Keep it gentle" is on.
 - App icons in `public/` are generated die-face tiles. Regenerate with `pnpm icons`
   (edit colour/pips in `scripts/gen-icons.mjs`); the favicon is a matching SVG.

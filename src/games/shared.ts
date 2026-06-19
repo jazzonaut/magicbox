@@ -1,0 +1,118 @@
+// Option building blocks reused across games, so the discussion timer and the
+// end-of-round reveal look and behave the same everywhere. A game opts in by
+// spreading these into its `options`, then calling the matching reader inside
+// `createRound` to translate the stored value.
+
+import type { GameOption, OptionValues, PromptCard } from "@/games/types";
+import { shuffle } from "@/utils/random";
+
+const TIMER_OFF = "off";
+
+/** A "Discussion timer" select: Off / 1 / 2 / 3 / 5 minutes. */
+export const timerOption: GameOption = {
+  kind: "select",
+  key: "timer",
+  label: "Discussion timer",
+  help: "Show a countdown while everyone debates.",
+  default: TIMER_OFF,
+  choices: [
+    { value: TIMER_OFF, label: "Off" },
+    { value: "60", label: "1 minute" },
+    { value: "120", label: "2 minutes" },
+    { value: "180", label: "3 minutes" },
+    { value: "300", label: "5 minutes" },
+  ],
+};
+
+/** Translate the timer option into seconds, or `undefined` when off/invalid. */
+export function timerSecondsFrom(options: OptionValues): number | undefined {
+  const value = options.timer;
+  if (typeof value !== "string" || value === TIMER_OFF) {
+    return undefined;
+  }
+  const seconds = Number(value);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
+}
+
+/** A "Reveal the answer at the end" toggle, off by default. */
+export const revealOption: GameOption = {
+  kind: "boolean",
+  key: "revealAtEnd",
+  label: "Reveal the answer at the end",
+  help: "After the discussion, show who it really was.",
+  default: false,
+};
+
+/** Whether the end-of-round reveal was switched on. */
+export function revealEnabled(options: OptionValues): boolean {
+  return options.revealAtEnd === true;
+}
+
+// ---- Prompt-deck shared options (Would You Rather, Most Likely To) ----------
+
+const PACK_ALL = "all";
+
+/** A single deck prompt, tagged with a theme pack and an optional cheeky flag
+ *  (cheeky prompts are hidden while "Keep it gentle" is on). */
+export interface PromptEntry {
+  text: string;
+  pack: string;
+  cheeky?: boolean;
+}
+
+/** Build a "Theme" select from a game's packs, with an "Everything" default. */
+export function packOption(packs: { value: string; label: string }[]): GameOption {
+  return {
+    kind: "select",
+    key: "pack",
+    label: "Theme",
+    help: "Narrow the deck to one flavour, or shuffle the lot.",
+    default: PACK_ALL,
+    choices: [{ value: PACK_ALL, label: "🎲 Everything" }, ...packs],
+  };
+}
+
+/** Hide the cheekier prompts. On by default — gentle out of the box. */
+export const kidFriendlyOption: GameOption = {
+  kind: "boolean",
+  key: "kidFriendly",
+  label: "Keep it gentle",
+  help: "Hide the cheekier prompts — best with younger players.",
+  default: true,
+};
+
+/** How many cards to deal before the deck loops back round. */
+export const roundsOption: GameOption = {
+  kind: "number",
+  key: "rounds",
+  label: "Number of cards",
+  help: "How many prompts to deal this round.",
+  default: 12,
+  min: 3,
+  max: 40,
+};
+
+/** Filter a tagged prompt list by the chosen pack + gentle toggle, then shuffle
+ *  and trim to the requested card count. Always returns at least one card. */
+export function buildPromptDeck(entries: PromptEntry[], options: OptionValues): PromptCard[] {
+  const pack = typeof options.pack === "string" ? options.pack : PACK_ALL;
+  const keepGentle = options.kidFriendly !== false;
+
+  let pool = entries;
+  if (pack !== PACK_ALL) {
+    pool = pool.filter((entry) => entry.pack === pack);
+  }
+  if (keepGentle) {
+    pool = pool.filter((entry) => entry.cheeky !== true);
+  }
+  // Never deal an empty deck — fall back to the full list if filters cleared it.
+  if (pool.length === 0) {
+    pool = entries;
+  }
+
+  const requested = typeof options.rounds === "number" ? Math.round(options.rounds) : pool.length;
+  const count = Math.max(1, Math.min(requested, pool.length));
+  return shuffle(pool)
+    .slice(0, count)
+    .map((entry) => ({ text: entry.text }));
+}

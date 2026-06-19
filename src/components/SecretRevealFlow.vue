@@ -60,7 +60,7 @@ function next(): void {
     <!-- Reveal stage: the secret card, only while held. -->
     <div v-else class="flex flex-1 flex-col items-center justify-center gap-8 text-center">
       <div
-        class="flex w-full max-w-xs flex-col items-center gap-3 rounded-3xl bg-[var(--mb-surface)] px-6 py-12"
+        class="flex max-h-[65vh] w-full max-w-xs flex-col items-center gap-3 overflow-y-auto rounded-3xl bg-[var(--mb-surface)] px-6 py-12"
         :style="{ boxShadow: `inset 0 0 0 2px ${current.accent ?? 'transparent'}` }"
       >
         <p

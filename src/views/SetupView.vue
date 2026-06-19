@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useElementBounding, useIntersectionObserver } from "@vueuse/core";
 import Button from "primevue/button";
 import { getGame } from "@/games/registry";
 import { usePlayers } from "@/composables/use-players";
@@ -23,6 +24,24 @@ const { players, selectedPlayers, addPlayer, toggleSelected, isSelected } = useP
 const optionValues = useGameOptions(game?.id ?? "none", game?.options ?? []);
 
 const dialogOpen = ref(false);
+
+// Scroll affordance: show a "more below" hint until the end of the content is in
+// view. A sentinel + observer copes with any content height and resizes, and we
+// measure the fixed start bar so the hint always floats just above it.
+const startBar = ref<HTMLElement | null>(null);
+const bottomSentinel = ref<HTMLElement | null>(null);
+const atBottom = ref(true);
+const { height: startBarHeight } = useElementBounding(startBar);
+
+useIntersectionObserver(bottomSentinel, (entries) => {
+  atBottom.value = entries[0]?.isIntersecting ?? true;
+});
+
+const showScrollHint = computed(() => !atBottom.value && startBarHeight.value > 0);
+
+function scrollToBottom(): void {
+  bottomSentinel.value?.scrollIntoView({ behavior: "smooth", block: "end" });
+}
 
 const enough = computed(() => !!game && selectedPlayers.value.length >= game.minPlayers);
 const tooMany = computed(
@@ -102,8 +121,36 @@ function start(): void {
       <GameOptionsForm v-model="optionValues" :options="game.options" />
     </section>
 
+    <!-- Marks the end of the scrollable content for the "more below" hint. -->
+    <div ref="bottomSentinel" aria-hidden="true" class="h-px w-full" />
+
+    <!-- "More below" affordance: fades the content into the start bar and nudges
+         with a bouncing chevron; vanishes once the bottom is in view. -->
+    <Transition name="fade">
+      <button
+        v-if="showScrollHint"
+        type="button"
+        aria-label="Scroll down for more options"
+        class="fixed inset-x-0 z-10 mx-auto flex max-w-md justify-center"
+        :style="{ bottom: `${startBarHeight + 4}px` }"
+        @click="scrollToBottom"
+      >
+        <span
+          class="flex h-12 w-full items-end justify-center bg-gradient-to-t from-[var(--mb-bg)] via-[var(--mb-bg)] to-transparent"
+        >
+          <span
+            class="mb-1 flex items-center gap-1 rounded-full bg-[var(--mb-surface-2)] px-3 py-1 text-xs font-medium text-[var(--mb-muted)] shadow-sm"
+          >
+            More options
+            <i class="pi pi-chevron-down animate-bounce text-[0.65rem]" />
+          </span>
+        </span>
+      </button>
+    </Transition>
+
     <!-- Fixed start bar so it's always thumb-reachable. -->
     <div
+      ref="startBar"
       class="fixed inset-x-0 bottom-0 mx-auto w-full max-w-md border-t border-[var(--mb-surface)] bg-[var(--mb-bg)] px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3"
     >
       <p v-if="!enough" class="mb-2 text-center text-sm text-[var(--mb-muted)]">

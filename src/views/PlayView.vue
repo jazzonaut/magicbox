@@ -6,9 +6,10 @@ import { getGame } from "@/games/registry";
 import { usePlayers } from "@/composables/use-players";
 import { useGameOptions } from "@/composables/use-game-options";
 import { pickOne } from "@/utils/random";
-import type { Player, PromptCard, Round, SecretCard } from "@/games/types";
+import type { Player, PromptCard, Round, RoundReveal, SecretCard } from "@/games/types";
 import SecretRevealFlow from "@/components/SecretRevealFlow.vue";
 import PromptDeckFlow from "@/components/PromptDeckFlow.vue";
+import DiscussionTimer from "@/components/DiscussionTimer.vue";
 
 const props = defineProps<{ gameId: string }>();
 const router = useRouter();
@@ -33,6 +34,8 @@ const stage = ref<"reveal" | "done">("reveal");
 const flowKey = ref(0);
 // A randomly chosen player to kick things off (clue-giving / reading order).
 const starter = ref<Player | null>(null);
+// Whether the optional end-of-round answer has been tapped open.
+const answerShown = ref(false);
 
 // Narrow the round once here so the template stays simple.
 const isPrompts = computed(() => round.value.kind === "prompts");
@@ -43,6 +46,22 @@ const promptCards = computed<PromptCard[]>(() =>
   round.value.kind === "prompts" ? round.value.prompts : [],
 );
 
+// Engine-rendered round extras: a discussion countdown and an optional answer.
+const timerSeconds = computed<number | undefined>(() => round.value.timerSeconds);
+const reveal = computed<RoundReveal | null>(() =>
+  round.value.kind === "secret" ? (round.value.reveal ?? null) : null,
+);
+const playersById = computed(() => new Map(roundPlayers.value.map((p) => [p.id, p])));
+const revealedPlayers = computed<Player[]>(() => {
+  const answer = reveal.value;
+  if (!answer) {
+    return [];
+  }
+  return answer.playerIds
+    .map((id) => playersById.value.get(id))
+    .filter((p): p is Player => p !== undefined);
+});
+
 function deal(): void {
   if (!game || !optionValues) {
     return;
@@ -51,6 +70,7 @@ function deal(): void {
   round.value = game.createRound(roundPlayers.value, optionValues.value);
   starter.value = roundPlayers.value.length > 0 ? pickOne(roundPlayers.value) : null;
   stage.value = "reveal";
+  answerShown.value = false;
   flowKey.value += 1;
 }
 
@@ -124,6 +144,33 @@ if (game) {
             >{{ starter.name }}
           </p>
         </div>
+
+        <!-- Optional discussion countdown. -->
+        <DiscussionTimer v-if="timerSeconds" :key="flowKey" :seconds="timerSeconds" />
+
+        <!-- Optional end-of-round answer, hidden until tapped. -->
+        <div v-if="reveal" class="w-full max-w-xs">
+          <Button
+            v-if="!answerShown"
+            label="Reveal the answer"
+            icon="pi pi-flag"
+            severity="secondary"
+            class="w-full"
+            @click="answerShown = true"
+          />
+          <div v-else class="rounded-2xl bg-[var(--mb-surface)] px-6 py-4">
+            <p class="text-sm uppercase tracking-wide text-[var(--mb-muted)]">{{ reveal.label }}</p>
+            <p class="mt-1 text-2xl font-bold">
+              <span v-for="(p, i) in revealedPlayers" :key="p.id">
+                <span v-if="i > 0">, </span>
+                <span v-if="p.emoji" class="mr-1">{{ p.emoji }}</span
+                >{{ p.name }}
+              </span>
+            </p>
+            <p v-if="reveal.note" class="mt-2 text-[var(--mb-muted)]">{{ reveal.note }}</p>
+          </div>
+        </div>
+
         <div class="flex w-full max-w-xs flex-col gap-3">
           <Button
             label="New round"

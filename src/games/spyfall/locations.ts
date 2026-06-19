@@ -2,12 +2,27 @@
 // role from it; the spy must work out where everyone is. Family-friendly,
 // kid-known places and jobs.
 
+export type SpyPack = "everyday" | "fantasy";
+
 export interface SpyLocation {
   name: string;
   roles: string[];
+  pack: SpyPack;
 }
 
-export const LOCATIONS: SpyLocation[] = [
+// The imaginative, adventurous places — everything else is an "everyday" spot.
+const FANTASY_LOCATIONS = new Set<string>([
+  "Castle",
+  "Pirate ship",
+  "Space station",
+  "Circus",
+  "Haunted house",
+  "Wizard school",
+  "Submarine",
+  "Dinosaur dig",
+]);
+
+const RAW_LOCATIONS: { name: string; roles: string[] }[] = [
   {
     name: "Beach",
     roles: [
@@ -257,3 +272,8 @@ export const LOCATIONS: SpyLocation[] = [
     roles: ["Singer", "Sound engineer", "Music producer", "Guitarist", "Drummer", "Receptionist"],
   },
 ];
+
+export const LOCATIONS: SpyLocation[] = RAW_LOCATIONS.map((location) => ({
+  ...location,
+  pack: FANTASY_LOCATIONS.has(location.name) ? "fantasy" : "everyday",
+}));

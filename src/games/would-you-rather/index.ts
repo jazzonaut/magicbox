@@ -1,6 +1,6 @@
 import type { GameDefinition, OptionValues, Player } from "@/games/types";
-import { shuffle } from "@/utils/random";
-import { WOULD_YOU_RATHER } from "./prompts";
+import { buildPromptDeck, kidFriendlyOption, packOption, roundsOption } from "@/games/shared";
+import { WOULD_YOU_RATHER, WYR_PACKS } from "./prompts";
 
 export const wouldYouRather: GameDefinition = {
   id: "would-you-rather",
@@ -9,9 +9,9 @@ export const wouldYouRather: GameDefinition = {
   description:
     "A deck of silly dilemmas. Read one out, then everyone says which they'd pick and why.",
   minPlayers: 2,
-  options: [],
+  options: [packOption(WYR_PACKS), kidFriendlyOption, roundsOption],
 
-  createRound(_players: Player[], _options: OptionValues) {
-    return { kind: "prompts", prompts: shuffle(WOULD_YOU_RATHER).map((text) => ({ text })) };
+  createRound(_players: Player[], options: OptionValues) {
+    return { kind: "prompts", prompts: buildPromptDeck(WOULD_YOU_RATHER, options) };
   },
 };
